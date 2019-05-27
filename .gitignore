@@ -185,3 +185,6 @@ pod2htmd.tmp
 # Windows manifest files
 *.manifest
 doc-nits
+
+# Eclipse settings
+.settings
