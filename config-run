@@ -1,0 +1,72 @@
+#!/bin/sh
+
+# Debug build
+# -pg -g3
+COMPILER_FLAGS="-d -fno-omit-frame-pointer"
+
+# Options list
+# https://wiki.openssl.org/index.php/Compilation_and_Installation
+
+# Include weak ciphers for testing (no-weak-ssl-ciphers)
+CIPHER_OPTS="\
+    enable-weak-ssl-ciphers \
+    no-idea \
+    no-camellia \
+    no-chacha \
+    no-seed \
+    no-bf \
+    no-cast \
+    no-rmd160 \
+    no-rc2 \
+    no-rc4 \
+    no-rc5 \
+    no-md2 \
+    no-md4 \
+    no-mdc2 \
+    no-whirlpool \
+    no-blake2 \
+    no-gost"
+
+# autoalginit and stdio required for unit tests
+# no-tls_1-method and no-tls-1_1-method restored for testing
+GENERAL_OPTS="\
+    enable-unit-test \
+    no-filenames \
+    no-crypto-mdebug \
+    no-sock \
+    no-zlib \
+    no-comp \
+    no-err \
+    no-engine \
+    no-hw \
+    no-asm \
+    no-dynamic-engine \
+    no-shared \
+    no-pic \
+    no-ssl3 \
+    no-dtls \
+    no-dtls1 \
+    no-ssl3-method \
+    no-dtls1-method \
+    no-dtls1_2-method \
+    no-threads \
+    no-nextprotoneg \
+    no-srp \
+    no-psk \
+    no-ec2m \
+    no-stdio"
+
+OBSCURE_OPTS="\
+    no-cms"
+
+EXTRA_DEFS="\
+    -DOPENSSL_COMPAT \
+    -DOPENSSL_SMALL_FOOTPRINT \
+    -DNO_SYSLOG"
+
+BUILD_OPTS="\
+    $COMPILER_FLAGS $GENERAL_OPTS $CIPHER_OPTS $OBSCURE_OPTS $EXTRA_DEFS"
+
+echo Build options: $BUILD_OPTS
+
+./config $BUILD_OPTS || exit
