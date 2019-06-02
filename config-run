@@ -53,8 +53,7 @@ GENERAL_OPTS="\
     no-nextprotoneg \
     no-srp \
     no-psk \
-    no-ec2m \
-    no-stdio"
+    no-ec2m"
 
 OBSCURE_OPTS="\
     no-cms"
