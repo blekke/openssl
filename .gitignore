@@ -188,3 +188,4 @@ doc-nits
 
 # Eclipse settings
 .settings
+util/sonar-data
