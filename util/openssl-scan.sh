@@ -1,8 +1,11 @@
 #!/bin/bash
 
-begin=$(date)
-
 DIR=openssl
+
+# Exit on first error
+set -e
+
+begin=$(date)
 
 if [ ! -d $DIR ]; then
     git clone git@gitlab.com:davxy/openssl.git $DIR
@@ -11,25 +14,30 @@ if [ ! -d $DIR ]; then
     cd ..
 fi
 
-# Update local master using upstream
 cd $DIR
+
+# Update local master using upstream
 git checkout master
 git pull upstream master
 
-# Push new master to gitlab/master
-git push origin master
-
-# Rebase develop to new master
+# Update local develop using origin
 git checkout develop
-git merge master
+git pull origin develop
 
-# Push new develop
+# Merge master to develop
+git merge --no-edit master
+
+# Push new stuff
+git push origin master
 git push origin develop
 
 # Analyze in docker
 docker run -v /home/tsm/openssl/openssl:/openssl -it --rm davxy/sonar-builder /bin/bash -c "cd openssl && ./util/sonar-run.sh"
 
 end=$(date)
+
+# Disable exit on first error
+set +e
 
 echo "Analysis begin: $begin"
 echo "Analysis end:   $end"
