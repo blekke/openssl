@@ -10,10 +10,16 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir srctop_file);
+use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir srctop_file srctop_dir bldtop_file);
 use OpenSSL::Test::Utils;
 
+BEGIN {
 setup("test_evp");
+}
+
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = disabled('legacy') ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -26,8 +32,29 @@ my @files = qw( evpciph.txt evpdigest.txt );
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
     evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpaessiv.txt
     evpccmcavs.txt );
+my @ideafiles = qw( evpciph_idea.txt );
+push @defltfiles, @ideafiles unless disabled("idea");
 
-plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles);
+my @castfiles = qw( evpciph_cast5.txt );
+push @defltfiles, @castfiles unless disabled("cast");
+
+my @seedfiles = qw( evpciph_seed.txt );
+push @defltfiles, @seedfiles unless disabled("seed");
+
+my @sm4files = qw( evpciph_sm4.txt );
+push @defltfiles, @sm4files unless disabled("sm4");
+
+plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
+
+my $infile = bldtop_file('providers', platform->dso('fips'));
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
+
+ok(run(app(['openssl', 'fipsinstall', '-out', bldtop_file('providers', 'fipsinstall.conf'),
+            '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_sect'])), "fipinstall");
 
 foreach (@configs) {
     $ENV{OPENSSL_CONF} = srctop_file("test", $_);

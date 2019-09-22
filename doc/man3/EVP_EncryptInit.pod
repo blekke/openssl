@@ -3,6 +3,8 @@
 =head1 NAME
 
 EVP_CIPHER_fetch,
+EVP_CIPHER_up_ref,
+EVP_CIPHER_free,
 EVP_CIPHER_CTX_new,
 EVP_CIPHER_CTX_reset,
 EVP_CIPHER_CTX_free,
@@ -26,6 +28,7 @@ EVP_CipherFinal,
 EVP_get_cipherbyname,
 EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
+EVP_CIPHER_is_a,
 EVP_CIPHER_name,
 EVP_CIPHER_provider,
 EVP_CIPHER_nid,
@@ -47,6 +50,7 @@ EVP_CIPHER_CTX_settable_params,
 EVP_CIPHER_CTX_block_size,
 EVP_CIPHER_CTX_key_length,
 EVP_CIPHER_CTX_iv_length,
+EVP_CIPHER_CTX_tag_length,
 EVP_CIPHER_CTX_get_app_data,
 EVP_CIPHER_CTX_set_app_data,
 EVP_CIPHER_CTX_type,
@@ -67,6 +71,8 @@ EVP_CIPHER_do_all_ex
 
  EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                               const char *properties);
+ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
+ void EVP_CIPHER_free(EVP_CIPHER *cipher);
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
@@ -111,6 +117,7 @@ EVP_CIPHER_do_all_ex
  const EVP_CIPHER *EVP_get_cipherbyobj(const ASN1_OBJECT *a);
 
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
+ int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
  const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
@@ -133,6 +140,7 @@ EVP_CIPHER_do_all_ex
  int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+ int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx);
  void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_set_app_data(const EVP_CIPHER_CTX *ctx, void *data);
  int EVP_CIPHER_CTX_type(const EVP_CIPHER_CTX *ctx);
@@ -150,13 +158,21 @@ EVP_CIPHER_do_all_ex
 The EVP cipher routines are a high level interface to certain
 symmetric ciphers.
 
+The B<EVP_CIPHER> type is a structure for cipher method implementation.
+
 EVP_CIPHER_fetch() fetches the cipher implementation for the given
 B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
-The returned value must eventually be freed with
-L<EVP_CIPHER_meth_free(3)>.
+The returned value must eventually be freed with EVP_CIPHER_free().
+
+EVP_CIPHER_up_ref() increments the reference count for an B<EVP_CIPHER>
+structure.
+
+EVP_CIPHER_free() decrements the reference count for the B<EVP_CIPHER>
+structure.
+If the reference count drops to 0 then the structure is freed.
 
 EVP_CIPHER_CTX_new() creates a cipher context.
 
@@ -285,6 +301,10 @@ length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>.
 It will return zero if the cipher does not use an IV.  The constant
 B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
 
+EVP_CIPHER_CTX_tag_length() returns the tag length of a AEAD cipher when passed
+a B<EVP_CIPHER_CTX>. It will return zero if the cipher does not support a tag.
+It returns a default value if the tag length has not been set.
+
 EVP_CIPHER_block_size() and EVP_CIPHER_CTX_block_size() return the block
 size of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure. The constant B<EVP_MAX_BLOCK_LENGTH> is also the maximum block
@@ -296,6 +316,9 @@ IDENTIFIER as such it ignores the cipher parameters and 40 bit RC2 and
 128 bit RC2 have the same NID. If the cipher does not have an object
 identifier or does not have ASN1 support this function will return
 B<NID_undef>.
+
+EVP_CIPHER_is_a() returns 1 if the given I<cipher> is an implementation of an
+algorithm that's identifiable with I<name>, otherwise 0.
 
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
 cipher or context.
@@ -351,6 +374,8 @@ and the given I<arg> as argument.
 EVP_CIPHER_fetch() returns a pointer to a B<EVP_CIPHER> for success
 and B<NULL> for failure.
 
+EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
+
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.
 
@@ -380,6 +405,9 @@ EVP_CIPHER_CTX_set_padding() always returns 1.
 
 EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
 length or zero if the cipher does not use an IV.
+
+EVP_CIPHER_CTX_tag_length() return the tag length or zero if the cipher does not
+use a tag.
 
 EVP_CIPHER_type() and EVP_CIPHER_CTX_type() return the NID of the cipher's
 OBJECT IDENTIFIER or NID_undef if it has no defined OBJECT IDENTIFIER.
@@ -756,6 +784,10 @@ B<EVP_CIPHER_CTX> was made opaque in OpenSSL 1.1.0.  As a result,
 EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
 disappeared.  EVP_CIPHER_CTX_init() remains as an alias for
 EVP_CIPHER_CTX_reset().
+
+The EVP_CIPHER_fetch(), EVP_CIPHER_free(), EVP_CIPHER_up_ref(),
+EVP_CIPHER_CTX_set_params() and EVP_CIPHER_CTX_get_params() functions
+were added in 3.0.
 
 =head1 COPYRIGHT
 

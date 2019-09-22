@@ -221,8 +221,8 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
         && (ctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) != 0;
 
     if (set_key) {
-        if (strcmp(OBJ_nid2sn(EVP_PKEY_id(EVP_PKEY_CTX_get0_pkey(ctx))),
-                   EVP_MAC_name(EVP_MAC_CTX_mac(hctx->ctx))) != 0)
+        if (!EVP_MAC_is_a(EVP_MAC_CTX_mac(hctx->ctx),
+                          OBJ_nid2sn(EVP_PKEY_id(EVP_PKEY_CTX_get0_pkey(ctx)))))
             return 0;
         key = EVP_PKEY_get0(EVP_PKEY_CTX_get0_pkey(ctx));
         if (key == NULL)
@@ -279,13 +279,11 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                                     engineid,
-                                                     strlen(engineid) + 1);
+                                                     engineid, 0);
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                     ciphname,
-                                                     strlen(ciphname) + 1);
+                                                     ciphname, 0);
                 params[params_n] = OSSL_PARAM_construct_end();
 
                 if (!EVP_MAC_CTX_set_params(hctx->ctx, params)
@@ -403,17 +401,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     ? NULL : (char *)ENGINE_get_id(ctx->engine);
 
                 if (engineid != NULL) {
-                    size_t engineid_l = strlen(engineid) + 1;
                     params[params_n++] =
                         OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                                         engineid,
-                                                         engineid_l);
+                                                         engineid, 0);
                 }
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                     mdname,
-                                                     strlen(mdname) + 1);
+                                                     mdname, 0);
                 params[params_n++] =
                     OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                       key->data, key->length);

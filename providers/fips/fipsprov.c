@@ -15,6 +15,7 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 
 /* TODO(3.0): Needed for dummy_evp_call(). To be removed */
 #include <openssl/sha.h>
@@ -121,6 +122,7 @@ static int dummy_evp_call(void *provctx)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
     char msg[] = "Hello World!";
     const unsigned char exptd[] = {
         0x7f, 0x83, 0xb1, 0x65, 0x7f, 0xf1, 0xfc, 0x53, 0xb9, 0x2d, 0xc1, 0x81,
@@ -138,7 +140,7 @@ static int dummy_evp_call(void *provctx)
     EC_KEY *key = NULL;
 #endif
 
-    if (ctx == NULL || sha256 == NULL || drbg == NULL)
+    if (ctx == NULL || sha256 == NULL || drbg == NULL || kdf == NULL)
         goto err;
 
     if (!EVP_DigestInit_ex(ctx, sha256, NULL))
@@ -185,8 +187,9 @@ static int dummy_evp_call(void *provctx)
     BN_CTX_end(bnctx);
     BN_CTX_free(bnctx);
 
+    EVP_KDF_free(kdf);
     EVP_MD_CTX_free(ctx);
-    EVP_MD_meth_free(sha256);
+    EVP_MD_free(sha256);
 
 #ifndef OPENSSL_NO_EC
     EC_KEY_free(key);
@@ -265,6 +268,10 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "AES-192-CTR";
     case NID_aes_128_ctr:
         return "AES-128-CTR";
+    case NID_aes_256_xts:
+        return "AES-256-XTS";
+    case NID_aes_128_xts:
+        return "AES-128-XTS";
     /* TODO(3.0) Change these when we have aliases */
     case NID_aes_256_gcm:
         return "id-aes256-GCM";
@@ -278,6 +285,22 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "id-aes192-CCM";
     case NID_aes_128_ccm:
         return "id-aes128-CCM";
+    case NID_id_aes256_wrap:
+        return "id-aes256-wrap";
+    case NID_id_aes192_wrap:
+        return "id-aes192-wrap";
+    case NID_id_aes128_wrap:
+        return "id-aes128-wrap";
+    case NID_id_aes256_wrap_pad:
+        return "id-aes256-wrap-pad";
+    case NID_id_aes192_wrap_pad:
+        return "id-aes192-wrap-pad";
+    case NID_id_aes128_wrap_pad:
+        return "id-aes128-wrap-pad";
+    case NID_des_ede3_ecb:
+        return "DES-EDE3";
+    case NID_des_ede3_cbc:
+        return "DES-EDE3-CBC";
     default:
         break;
     }
@@ -299,7 +322,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA3-512", "fips=yes", sha3_512_functions },
     /*
      * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
-     * the KMAC128 and KMAC256.
+     * KMAC128 and KMAC256.
      */
     { "KECCAK_KMAC128", "fips=yes", keccak_kmac_128_functions },
     { "KECCAK_KMAC256", "fips=yes", keccak_kmac_256_functions },
@@ -317,6 +340,8 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "AES-256-CTR", "fips=yes", aes256ctr_functions },
     { "AES-192-CTR", "fips=yes", aes192ctr_functions },
     { "AES-128-CTR", "fips=yes", aes128ctr_functions },
+    { "AES-256-XTS", "fips=yes", aes256xts_functions },
+    { "AES-128-XTS", "fips=yes", aes128xts_functions },
     /* TODO(3.0) Add aliases for these ciphers */
     { "id-aes256-GCM", "fips=yes", aes256gcm_functions },
     { "id-aes192-GCM", "fips=yes", aes192gcm_functions },
@@ -324,6 +349,12 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "id-aes256-CCM", "fips=yes", aes256ccm_functions },
     { "id-aes192-CCM", "fips=yes", aes192ccm_functions },
     { "id-aes128-CCM", "fips=yes", aes128ccm_functions },
+    { "id-aes256-wrap", "fips=yes", aes256wrap_functions },
+    { "id-aes192-wrap", "fips=yes", aes192wrap_functions },
+    { "id-aes128-wrap", "fips=yes", aes128wrap_functions },
+    { "id-aes256-wrap-pad", "fips=yes", aes256wrappad_functions },
+    { "id-aes192-wrap-pad", "fips=yes", aes192wrappad_functions },
+    { "id-aes128-wrap-pad", "fips=yes", aes128wrappad_functions },
 #ifndef OPENSSL_NO_DES
     { "DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
     { "DES-EDE3-CBC", "fips=yes", tdes_ede3_cbc_functions },
@@ -342,6 +373,14 @@ static const OSSL_ALGORITHM fips_macs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_kdfs[] = {
+    { OSSL_KDF_NAME_HKDF, "fips=yes", kdf_hkdf_functions },
+    { OSSL_KDF_NAME_SSKDF, "fips=yes", kdf_sskdf_functions },
+    { OSSL_KDF_NAME_PBKDF2, "fips=yes", kdf_pbkdf2_functions },
+    { OSSL_KDF_NAME_TLS1_PRF, "fips=yes", kdf_tls1_prf_functions },
+   { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
                                          int operation_id,
                                          int *no_cache)
@@ -354,6 +393,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
         return fips_ciphers;
     case OSSL_OP_MAC:
         return fips_macs;
+    case OSSL_OP_KDF:
+        return fips_kdfs;
     }
     return NULL;
 }
@@ -445,8 +486,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_BIO_NEW_MEMBUF:
             selftest_params.bio_new_buffer_cb = OSSL_get_BIO_new_membuf(in);
             break;
-        case OSSL_FUNC_BIO_READ:
-            selftest_params.bio_read_cb = OSSL_get_BIO_read(in);
+        case OSSL_FUNC_BIO_READ_EX:
+            selftest_params.bio_read_ex_cb = OSSL_get_BIO_read_ex(in);
             break;
         case OSSL_FUNC_BIO_FREE:
             selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
@@ -468,7 +509,15 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         OPENSSL_CTX_free(ctx);
         return 0;
     }
+
     fgbl->prov = provider;
+
+    selftest_params.libctx = PROV_LIBRARY_CONTEXT_OF(ctx);
+    if (!SELF_TEST_post(&selftest_params)) {
+        OPENSSL_CTX_free(ctx);
+        return 0;
+    }
+
     *out = fips_dispatch_table;
     *provctx = ctx;
 

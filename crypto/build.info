@@ -1,7 +1,7 @@
 # Note that these directories are filtered in Configure.  Look for %skipdir
 # there for further explanations.
 SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
-        txt_db pkcs7 pkcs12 ui kdf store property \
+        txt_db pkcs7 pkcs12 ui store property \
         md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 blake2 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
@@ -82,29 +82,29 @@ SOURCE[../providers/fips]=$UTIL_COMMON
 DEFINE[../providers/fips]=$UTIL_DEFINE
 
 
+DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h
 GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(LIB_CFLAGS) $(CPPFLAGS_Q)" "$(PLATFORM)"
 DEPEND[buildinf.h]=../configdata.pm
 
-GENERATE[uplink-x86.s]=../ms/uplink-x86.pl $(PERLASM_SCHEME)
-GENERATE[uplink-x86_64.s]=../ms/uplink-x86_64.pl $(PERLASM_SCHEME)
-GENERATE[uplink-ia64.s]=../ms/uplink-ia64.pl $(PERLASM_SCHEME)
+GENERATE[uplink-x86.s]=../ms/uplink-x86.pl
+GENERATE[uplink-x86_64.s]=../ms/uplink-x86_64.pl
+GENERATE[uplink-ia64.s]=../ms/uplink-ia64.pl
 
-GENERATE[x86cpuid.s]=x86cpuid.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
+GENERATE[x86cpuid.s]=x86cpuid.pl
 DEPEND[x86cpuid.s]=perlasm/x86asm.pl
 
-GENERATE[x86_64cpuid.s]=x86_64cpuid.pl $(PERLASM_SCHEME)
+GENERATE[x86_64cpuid.s]=x86_64cpuid.pl
 
 GENERATE[ia64cpuid.s]=ia64cpuid.S
-GENERATE[ppccpuid.s]=ppccpuid.pl $(PERLASM_SCHEME)
-GENERATE[pariscid.s]=pariscid.pl $(PERLASM_SCHEME)
+GENERATE[ppccpuid.s]=ppccpuid.pl
+GENERATE[pariscid.s]=pariscid.pl
 GENERATE[alphacpuid.s]=alphacpuid.pl
-GENERATE[arm64cpuid.S]=arm64cpuid.pl $(PERLASM_SCHEME)
+GENERATE[arm64cpuid.S]=arm64cpuid.pl
 INCLUDE[arm64cpuid.o]=.
-GENERATE[armv4cpuid.S]=armv4cpuid.pl $(PERLASM_SCHEME)
+GENERATE[armv4cpuid.S]=armv4cpuid.pl
 INCLUDE[armv4cpuid.o]=.
-GENERATE[s390xcpuid.S]=s390xcpuid.pl $(PERLASM_SCHEME)
+GENERATE[s390xcpuid.S]=s390xcpuid.pl
 INCLUDE[s390xcpuid.o]=.
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]

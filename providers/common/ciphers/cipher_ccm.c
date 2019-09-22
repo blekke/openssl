@@ -143,9 +143,19 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ccm_get_ivlen(ctx))) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ccm_get_ivlen(ctx))) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAGLEN);
+    if (p != NULL) {
+        size_t m = ctx->m;
+
+        if (!OSSL_PARAM_set_size_t(p, m)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
@@ -161,7 +171,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -346,7 +356,7 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
     if (!ctx->key_set)
         return 0;
 
-    if (ctx->tls_aad_len >= 0)
+    if (ctx->tls_aad_len != UNINITIALISED_SIZET)
         return ccm_tls_cipher(ctx, out, padlen, in, len);
 
     /* EVP_*Final() doesn't return any data */
@@ -406,7 +416,7 @@ void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
     ctx->len_set = 0;
     ctx->l = 8;
     ctx->m = 12;
-    ctx->tls_aad_len = -1;
+    ctx->tls_aad_len = UNINITIALISED_SIZET;
     ctx->hw = hw;
 }
 

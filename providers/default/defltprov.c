@@ -114,6 +114,13 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-256-CTR", "default=yes", aes256ctr_functions },
     { "AES-192-CTR", "default=yes", aes192ctr_functions },
     { "AES-128-CTR", "default=yes", aes128ctr_functions },
+    { "AES-256-XTS", "default=yes", aes256xts_functions },
+    { "AES-128-XTS", "default=yes", aes128xts_functions },
+#ifndef OPENSSL_NO_OCB
+    { "AES-256-OCB", "default=yes", aes256ocb_functions },
+    { "AES-192-OCB", "default=yes", aes192ocb_functions },
+    { "AES-128-OCB", "default=yes", aes128ocb_functions },
+#endif /* OPENSSL_NO_OCB */
 /* TODO(3.0) Add aliases when they are supported */
     { "id-aes256-GCM", "default=yes", aes256gcm_functions },
     { "id-aes192-GCM", "default=yes", aes192gcm_functions },
@@ -121,6 +128,12 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "id-aes256-CCM", "default=yes", aes256ccm_functions },
     { "id-aes192-CCM", "default=yes", aes192ccm_functions },
     { "id-aes128-CCM", "default=yes", aes128ccm_functions },
+    { "id-aes256-wrap", "default=yes", aes256wrap_functions },
+    { "id-aes192-wrap", "default=yes", aes192wrap_functions },
+    { "id-aes128-wrap", "default=yes", aes128wrap_functions },
+    { "id-aes256-wrap-pad", "default=yes", aes256wrappad_functions },
+    { "id-aes192-wrap-pad", "default=yes", aes192wrappad_functions },
+    { "id-aes128-wrap-pad", "default=yes", aes128wrappad_functions },
 #ifndef OPENSSL_NO_ARIA
     { "ARIA-256-GCM", "default=yes", aria256gcm_functions },
     { "ARIA-192-GCM", "default=yes", aria192gcm_functions },
@@ -187,6 +200,37 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "DESX-CBC", "default=yes", tdes_desx_cbc_functions },
     { "id-smime-alg-CMS3DESwrap", "default=yes", tdes_wrap_cbc_functions },
 #endif /* OPENSSL_NO_DES */
+#ifndef OPENSSL_NO_BF
+    { "BF-ECB", "default=yes", blowfish128ecb_functions },
+    { "BF-CBC", "default=yes", blowfish128cbc_functions },
+    { "BF-OFB", "default=yes", blowfish64ofb64_functions },
+    { "BF-CFB", "default=yes", blowfish64cfb64_functions },
+#endif /* OPENSSL_NO_BF */
+#ifndef OPENSSL_NO_IDEA
+    { "IDEA-ECB", "default=yes", idea128ecb_functions },
+    { "IDEA-CBC", "default=yes", idea128cbc_functions },
+    { "IDEA-OFB", "default=yes", idea128ofb64_functions },
+    { "IDEA-CFB", "default=yes", idea128cfb64_functions },
+#endif /* OPENSSL_NO_IDEA */
+#ifndef OPENSSL_NO_CAST
+    { "CAST5-ECB", "default=yes", cast5128ecb_functions },
+    { "CAST5-CBC", "default=yes", cast5128cbc_functions },
+    { "CAST5-OFB", "default=yes", cast564ofb64_functions },
+    { "CAST5-CFB", "default=yes", cast564cfb64_functions },
+#endif /* OPENSSL_NO_CAST */
+#ifndef OPENSSL_NO_SEED
+    { "SEED-ECB", "default=yes", seed128ecb_functions },
+    { "SEED-CBC", "default=yes", seed128cbc_functions },
+    { "SEED-OFB", "default=yes", seed128ofb128_functions },
+    { "SEED-CFB", "default=yes", seed128cfb128_functions },
+#endif /* OPENSSL_NO_SEED */
+#ifndef OPENSSL_NO_SM4
+    { "SM4-ECB", "default=yes", sm4128ecb_functions },
+    { "SM4-CBC", "default=yes", sm4128cbc_functions },
+    { "SM4-CTR", "default=yes", sm4128ctr_functions },
+    { "SM4-OFB", "default=yes", sm4128ofb128_functions },
+    { "SM4-CFB", "default=yes", sm4128cfb128_functions },
+#endif /* OPENSSL_NO_SM4 */
     { NULL, NULL, NULL }
 };
 
@@ -211,6 +255,22 @@ static const OSSL_ALGORITHM deflt_macs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_kdfs[] = {
+    { OSSL_KDF_NAME_HKDF, "default=yes", kdf_hkdf_functions },
+    { OSSL_KDF_NAME_SSKDF, "default=yes", kdf_sskdf_functions },
+    { OSSL_KDF_NAME_PBKDF2, "default=yes", kdf_pbkdf2_functions },
+    { OSSL_KDF_NAME_SSHKDF, "default=yes", kdf_sshkdf_functions },
+    { OSSL_KDF_NAME_X963KDF, "default=yes", kdf_x963_kdf_functions },
+    { OSSL_KDF_NAME_TLS1_PRF, "default=yes", kdf_tls1_prf_functions },
+#ifndef OPENSSL_NO_CMS
+    { OSSL_KDF_NAME_X942KDF, "default=yes", kdf_x942_kdf_functions },
+#endif
+#ifndef OPENSSL_NO_SCRYPT
+    { OSSL_KDF_NAME_SCRYPT, "default=yes", kdf_scrypt_functions },
+#endif
+   { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
     { "dhKeyAgreement", "default=yes", dh_keyexch_functions },
@@ -218,9 +278,20 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_signature[] = {
+#ifndef OPENSSL_NO_DSA
+    { "DSA", "default=yes", dsa_signature_functions },
+#endif
+    { NULL, NULL, NULL }
+};
+
+
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
     { "dhKeyAgreement", "default=yes", dh_keymgmt_functions },
+#endif
+#ifndef OPENSSL_NO_DSA
+    { "DSA", "default=yes", dsa_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -237,10 +308,14 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_ciphers;
     case OSSL_OP_MAC:
         return deflt_macs;
+    case OSSL_OP_KDF:
+        return deflt_kdfs;
     case OSSL_OP_KEYMGMT:
         return deflt_keymgmt;
     case OSSL_OP_KEYEXCH:
         return deflt_keyexch;
+    case OSSL_OP_SIGNATURE:
+        return deflt_signature;
     }
     return NULL;
 }
