@@ -38,7 +38,6 @@ GENERAL_OPTS="\
     no-comp \
     no-err \
     no-engine \
-    no-hw \
     no-asm \
     no-dynamic-engine \
     no-shared \
@@ -59,7 +58,6 @@ OBSCURE_OPTS="\
     no-cms"
 
 EXTRA_DEFS="\
-    -DOPENSSL_COMPAT \
     -DOPENSSL_SMALL_FOOTPRINT \
     -DNO_SYSLOG"
 
