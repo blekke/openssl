@@ -105,7 +105,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (pkey->ameth && pkey->ameth->param_missing)
+    if (pkey != NULL && pkey->ameth && pkey->ameth->param_missing)
         return pkey->ameth->param_missing(pkey);
     return 0;
 }
@@ -493,7 +493,7 @@ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 
 RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 {
-    if (pkey->type != EVP_PKEY_RSA) {
+    if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA_PSS) {
         EVPerr(EVP_F_EVP_PKEY_GET0_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
         return NULL;
     }

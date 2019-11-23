@@ -73,6 +73,9 @@ static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
  * We add diverse other names where applicable, such as the names that
  * NIST uses, or that are used for ASN.1 OBJECT IDENTIFIERs, or names
  * we have used historically.
+ *
+ * Algorithm names are case insensitive, but we use all caps in our "canonical"
+ * names for consistency.
  */
 static const OSSL_ALGORITHM deflt_digests[] = {
     /* Our primary name:NIST name[:our older names] */
@@ -93,11 +96,11 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "SHA3-512", "default=yes", sha3_512_functions },
 
     /*
-     * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
-     * the KMAC128 and KMAC256.
+     * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
+     * the KMAC-128 and KMAC-256.
      */
-    { "KECCAK_KMAC128", "default=yes", keccak_kmac_128_functions },
-    { "KECCAK_KMAC256", "default=yes", keccak_kmac_256_functions },
+    { "KECCAK-KMAC-128:KECCAK-KMAC128", "default=yes", keccak_kmac_128_functions },
+    { "KECCAK-KMAC-256:KECCAK-KMAC256", "default=yes", keccak_kmac_256_functions },
 
     /* Our primary name:NIST name */
     { "SHAKE-128:SHAKE128", "default=yes", shake_128_functions },
@@ -111,8 +114,8 @@ static const OSSL_ALGORITHM deflt_digests[] = {
      * If we assume that "2b" and "2s" are versions, that pattern
      * fits with ours.  We also add our historical names.
      */
-    { "BLAKE2s-256:BLAKE2s256", "default=yes", blake2s256_functions },
-    { "BLAKE2b-512:BLAKE2b512", "default=yes", blake2b512_functions },
+    { "BLAKE2S-256:BLAKE2s256", "default=yes", blake2s256_functions },
+    { "BLAKE2B-512:BLAKE2b512", "default=yes", blake2b512_functions },
 #endif /* OPENSSL_NO_BLAKE2 */
 
 #ifndef OPENSSL_NO_SM3
@@ -156,6 +159,11 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-192-OCB", "default=yes", aes192ocb_functions },
     { "AES-128-OCB", "default=yes", aes128ocb_functions },
 #endif /* OPENSSL_NO_OCB */
+#ifndef OPENSSL_NO_SIV
+    { "AES-128-SIV", "default=yes", aes128siv_functions },
+    { "AES-192-SIV", "default=yes", aes192siv_functions },
+    { "AES-256-SIV", "default=yes", aes256siv_functions },
+#endif /* OPENSSL_NO_SIV */
     { "AES-256-GCM:id-aes256-GCM", "default=yes", aes256gcm_functions },
     { "AES-192-GCM:id-aes192-GCM", "default=yes", aes192gcm_functions },
     { "AES-128-GCM:id-aes128-GCM", "default=yes", aes128gcm_functions },
@@ -280,6 +288,9 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 #ifndef OPENSSL_NO_RC4
     { "RC4", "default=yes", rc4128_functions },
     { "RC4-40", "default=yes", rc440_functions },
+# ifndef OPENSSL_NO_MD5
+    { "RC4-HMAC-MD5", "default=yes", rc4_hmac_md5_functions },
+# endif /* OPENSSL_NO_MD5 */
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_RC5
     { "RC5-ECB", "default=yes", rc5128ecb_functions },
@@ -306,40 +317,41 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 
 static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_BLAKE2
-    { "BLAKE2bMAC", "default=yes", blake2bmac_functions },
-    { "BLAKE2sMAC", "default=yes", blake2smac_functions },
+    { "BLAKE2BMAC", "default=yes", blake2bmac_functions },
+    { "BLAKE2SMAC", "default=yes", blake2smac_functions },
 #endif
 #ifndef OPENSSL_NO_CMAC
     { "CMAC", "default=yes", cmac_functions },
 #endif
     { "GMAC", "default=yes", gmac_functions },
     { "HMAC", "default=yes", hmac_functions },
-    { "KMAC128", "default=yes", kmac128_functions },
-    { "KMAC256", "default=yes", kmac256_functions },
+    { "KMAC-128:KMAC128", "default=yes", kmac128_functions },
+    { "KMAC-256:KMAC256", "default=yes", kmac256_functions },
 #ifndef OPENSSL_NO_SIPHASH
-    { "SipHash", "default=yes", siphash_functions },
+    { "SIPHASH", "default=yes", siphash_functions },
 #endif
 #ifndef OPENSSL_NO_POLY1305
-    { "Poly1305", "default=yes", poly1305_functions },
+    { "POLY1305", "default=yes", poly1305_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_kdfs[] = {
-    { OSSL_KDF_NAME_HKDF, "default=yes", kdf_hkdf_functions },
-    { OSSL_KDF_NAME_SSKDF, "default=yes", kdf_sskdf_functions },
-    { OSSL_KDF_NAME_PBKDF2, "default=yes", kdf_pbkdf2_functions },
-    { OSSL_KDF_NAME_SSHKDF, "default=yes", kdf_sshkdf_functions },
-    { OSSL_KDF_NAME_X963KDF, "default=yes", kdf_x963_kdf_functions },
-    { OSSL_KDF_NAME_TLS1_PRF, "default=yes", kdf_tls1_prf_functions },
-    { OSSL_KDF_NAME_KBKDF, "default=yes", kdf_kbkdf_functions },
+    { "HKDF", "default=yes", kdf_hkdf_functions },
+    { "SSKDF", "default=yes", kdf_sskdf_functions },
+    { "PBKDF2", "default=yes", kdf_pbkdf2_functions },
+    { "SSHKDF", "default=yes", kdf_sshkdf_functions },
+    { "X963KDF", "default=yes", kdf_x963_kdf_functions },
+    { "TLS1-PRF", "default=yes", kdf_tls1_prf_functions },
+    { "KBKDF", "default=yes", kdf_kbkdf_functions },
 #ifndef OPENSSL_NO_CMS
-    { OSSL_KDF_NAME_X942KDF, "default=yes", kdf_x942_kdf_functions },
+    { "X942KDF", "default=yes", kdf_x942_kdf_functions },
 #endif
 #ifndef OPENSSL_NO_SCRYPT
     { "SCRYPT:id-scrypt", "default=yes", kdf_scrypt_functions },
 #endif
-   { NULL, NULL, NULL }
+    { "KRB5KDF", "default=yes", kdf_krb5kdf_functions },
+    { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_keyexch[] = {
@@ -356,6 +368,10 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_asym_cipher[] = {
+    { "RSA:rsaEncryption", "default=yes", rsa_asym_cipher_functions },
+    { NULL, NULL, NULL }
+};
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
@@ -388,6 +404,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_keyexch;
     case OSSL_OP_SIGNATURE:
         return deflt_signature;
+    case OSSL_OP_ASYM_CIPHER:
+        return deflt_asym_cipher;
     }
     return NULL;
 }

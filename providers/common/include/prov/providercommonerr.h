@@ -23,7 +23,7 @@ int ERR_load_PROV_strings(void);
 /*
  * PROV function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define PROV_F_AESNI_INIT_KEY                            0
 #  define PROV_F_AES_BLOCK_FINAL                           0
 #  define PROV_F_AES_BLOCK_UPDATE                          0
@@ -60,12 +60,14 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
 # define PROV_R_INAVLID_UKM_LENGTH                        146
 # define PROV_R_INVALID_AAD                               108
+# define PROV_R_INVALID_CONSTANT_LENGTH                   157
 # define PROV_R_INVALID_CUSTOM_LENGTH                     111
 # define PROV_R_INVALID_DATA                              115
 # define PROV_R_INVALID_DIGEST                            122
 # define PROV_R_INVALID_ITERATION_COUNT                   123
 # define PROV_R_INVALID_IVLEN                             116
 # define PROV_R_INVALID_IV_LENGTH                         109
+# define PROV_R_INVALID_KEY                               158
 # define PROV_R_INVALID_KEYLEN                            117
 # define PROV_R_INVALID_KEY_LEN                           124
 # define PROV_R_INVALID_KEY_LENGTH                        105
@@ -77,6 +79,8 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_TAG                               110
 # define PROV_R_INVALID_TAGLEN                            118
 # define PROV_R_MISSING_CEK_ALG                           144
+# define PROV_R_MISSING_CIPHER                            155
+# define PROV_R_MISSING_CONSTANT                          156
 # define PROV_R_MISSING_KEY                               128
 # define PROV_R_MISSING_MAC                               150
 # define PROV_R_MISSING_MESSAGE_DIGEST                    129

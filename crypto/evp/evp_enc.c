@@ -171,6 +171,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aes_256_gcm:
         case NID_aes_192_gcm:
         case NID_aes_128_gcm:
+        case NID_aes_256_siv:
+        case NID_aes_192_siv:
+        case NID_aes_128_siv:
         case NID_id_aes256_wrap:
         case NID_id_aes256_wrap_pad:
         case NID_id_aes192_wrap:
@@ -280,6 +283,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_rc2_ofb64:
         case NID_chacha20:
         case NID_chacha20_poly1305:
+        case NID_rc4_hmac_md5:
             break;
         default:
             goto legacy;
@@ -1022,17 +1026,31 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
-    int ok;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    size_t len = keylen;
+    if (c->cipher->prov != NULL) {
+        int ok;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        size_t len = keylen;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
-    ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
+        if (EVP_CIPHER_CTX_key_length(c) == keylen)
+            return 1;
 
-    if (ok != EVP_CTRL_RET_UNSUPPORTED)
-        return ok;
+        /* Check the cipher actually understands this parameter */
+        if (OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(c->cipher),
+                                    OSSL_CIPHER_PARAM_KEYLEN) == NULL)
+            return 0;
+
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
+        ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
+
+        return ok > 0 ? 1 : 0;
+    }
 
     /* TODO(3.0) legacy code follows */
+
+    /*
+     * Note there have never been any built-in ciphers that define this flag
+     * since it was first introduced.
+     */
     if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
         return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
     if (EVP_CIPHER_CTX_key_length(c) == keylen)
@@ -1123,6 +1141,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             return 0;
         i = (unsigned int)arg;
         params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_ROUNDS, &i);
+        break;
+    case EVP_CTRL_SET_SPEED:
+        if (arg < 0)
+            return 0;
+        i = (unsigned int)arg;
+        params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_SPEED, &i);
         break;
     case EVP_CTRL_AEAD_GET_TAG:
         set_params = 0; /* Fall thru */
@@ -1335,12 +1359,18 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
     int nid;
     int *legacy_nid = vlegacy_nid;
+    /*
+     * We use lowest level function to get the associated method, because
+     * higher level functions such as EVP_get_cipherbyname() have changed
+     * to look at providers too.
+     */
+    const void *legacy_method = OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
 
     if (*legacy_nid == -1)       /* We found a clash already */
         return;
-    if ((nid = OBJ_sn2nid(name)) == NID_undef
-        && (nid = OBJ_ln2nid(name)) == NID_undef)
+    if (legacy_method == NULL)
         return;
+    nid = EVP_CIPHER_nid(legacy_method);
     if (*legacy_nid != NID_undef && *legacy_nid != nid) {
         *legacy_nid = -1;
         return;
@@ -1351,8 +1381,7 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 
 static void *evp_cipher_from_dispatch(const int name_id,
                                       const OSSL_DISPATCH *fns,
-                                      OSSL_PROVIDER *prov,
-                                      void *unused)
+                                      OSSL_PROVIDER *prov)
 {
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
@@ -1492,7 +1521,7 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_CIPHER *cipher =
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
-                          evp_cipher_from_dispatch, NULL, evp_cipher_up_ref,
+                          evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
 
     return cipher;
@@ -1527,5 +1556,5 @@ void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_cipher_from_dispatch, NULL, evp_cipher_free);
+                       evp_cipher_from_dispatch, evp_cipher_free);
 }
