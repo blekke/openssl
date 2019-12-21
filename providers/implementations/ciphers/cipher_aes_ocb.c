@@ -9,7 +9,7 @@
 
 #include "cipher_aes_ocb.h"
 #include "prov/providercommonerr.h"
-#include "prov/cipher_aead.h"
+#include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
 
 #define AES_OCB_FLAGS AEAD_FLAGS
@@ -213,6 +213,11 @@ static int aes_ocb_block_update(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ctx->key_set || !update_iv(ctx))
         return 0;
+
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
 
     /* Are we dealing with AAD or normal data here? */
     if (out == NULL) {

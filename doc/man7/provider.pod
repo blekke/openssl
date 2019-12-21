@@ -147,6 +147,14 @@ The number for this operation is B<OSSL_OP_KEYEXCH>.
 The functions the provider can offer are described in
 L<provider-keyexch(7)>
 
+=item Serialization
+
+In the OpenSSL libraries, the corresponding method object is
+B<OSSL_SERIALIZER>.
+The number for this operation is B<OSSL_OP_SERIALIZER>.
+The functions the provider can offer are described in
+L<provider-serializer(7)>
+
 =back
 
 =head2 Fetching algorithms
@@ -210,7 +218,7 @@ L<EVP_CipherInit_ex(3)>, the actual implementation to be used is
 fetched implicitly using default search criteria.
 
 Implicit fetching can also occur with functions such as
-L<EVP_PKEY_CTX_derive_init_ex(3)> where a NULL algorithm parameter is
+L<EVP_PKEY_derive_init_ex(3)> where a NULL algorithm parameter is
 supplied.
 In this case an algorithm implementation is implicitly fetched using
 default search criteria and an algorithm name that is consistent with

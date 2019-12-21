@@ -316,7 +316,6 @@ CRYPTO_ocb128_setiv
 CRYPTO_ocb128_tag
 CRYPTO_ofb128_encrypt
 CRYPTO_secure_actual_size
-CRYPTO_secure_allocated
 CRYPTO_xts128_encrypt
 Camellia_cbc_encrypt
 Camellia_cfb128_encrypt
@@ -455,6 +454,7 @@ ERR_load_PKCS12_strings
 ERR_load_PKCS7_strings
 ERR_load_RAND_strings
 ERR_load_RSA_strings
+ERR_load_OSSL_SERIALIZER_strings
 ERR_load_TS_strings
 ERR_load_UI_strings
 ERR_load_X509V3_strings
