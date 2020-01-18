@@ -14,31 +14,16 @@
 extern "C" {
 # endif
 
-/*
- * Well known parameter names that Providers can define
- */
+/* Well known parameter names that Providers can define */
+#define OSSL_PROV_PARAM_NAME            "name"                /* utf8_string */
+#define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_string */
+#define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_string */
+#define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"     /* octet_string */
 
-/*
- * A printable name for this provider
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_NAME        "name"
-/*
- * A version string for this provider
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_VERSION     "version"
-/*
- * A string providing provider specific build information
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
-
-/*
- * The module filename
- * Type: OSSL_PARAM_OCTET_STRING
- */
-#define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"
+/* Self test callback parameters */
+#define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */
+#define OSSL_PROV_PARAM_SELF_TEST_TYPE   "st-type"  /* utf8_string */
+#define OSSL_PROV_PARAM_SELF_TEST_DESC   "st-desc"  /* utf8_string */
 
 /*
  * Algorithm parameters
@@ -169,6 +154,11 @@ extern "C" {
 #define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
 
 /* PKEY parameters */
+/* Common PKEY parameters */
+#define OSSL_PKEY_PARAM_BITS                "bits" /* integer */
+#define OSSL_PKEY_PARAM_MAX_SIZE            "max-size" /* integer */
+#define OSSL_PKEY_PARAM_SECURITY_BITS       "security-bits" /* integer */
+
 /* Diffie-Hellman/DSA Parameters */
 #define OSSL_PKEY_PARAM_FFC_P        "p"
 #define OSSL_PKEY_PARAM_FFC_G        "g"

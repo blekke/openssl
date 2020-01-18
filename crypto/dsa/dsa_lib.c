@@ -19,11 +19,6 @@
 
 #ifndef FIPS_MODE
 
-DSA *DSA_new(void)
-{
-    return DSA_new_method(NULL);
-}
-
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
@@ -32,13 +27,6 @@ int DSA_set_ex_data(DSA *d, int idx, void *arg)
 void *DSA_get_ex_data(DSA *d, int idx)
 {
     return CRYPTO_get_ex_data(&d->ex_data, idx);
-}
-
-int DSA_security_bits(const DSA *d)
-{
-    if (d->p && d->q)
-        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
-    return -1;
 }
 
 #ifndef OPENSSL_NO_DH
@@ -144,11 +132,6 @@ ENGINE *DSA_get0_engine(DSA *d)
     return d->engine;
 }
 
-int DSA_bits(const DSA *dsa)
-{
-    return BN_num_bits(dsa->p);
-}
-
 int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
 {
     /*
@@ -215,8 +198,10 @@ static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
 
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 
+#ifndef FIPS_MODE
     if (!crypto_new_ex_data_ex(libctx, CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
         goto err;
+#endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_INIT_FAIL);
@@ -235,9 +220,9 @@ DSA *DSA_new_method(ENGINE *engine)
     return dsa_new_method(NULL, engine);
 }
 
-DSA *dsa_new(OPENSSL_CTX *libctx)
+DSA *DSA_new(void)
 {
-    return dsa_new_method(libctx, NULL);
+    return DSA_new_method(NULL);
 }
 
 void DSA_free(DSA *r)
@@ -259,7 +244,9 @@ void DSA_free(DSA *r)
     ENGINE_finish(r->engine);
 #endif
 
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
+#endif
 
     CRYPTO_THREAD_lock_free(r->lock);
 
@@ -352,3 +339,14 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
     return 1;
 }
 
+int DSA_security_bits(const DSA *d)
+{
+    if (d->p && d->q)
+        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    return -1;
+}
+
+int DSA_bits(const DSA *dsa)
+{
+    return BN_num_bits(dsa->p);
+}
