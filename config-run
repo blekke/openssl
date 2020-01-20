@@ -52,14 +52,16 @@ GENERAL_OPTS="\
     no-nextprotoneg \
     no-srp \
     no-psk \
-    no-ec2m"
+    no-ec2m \
+    no-deprecated"
 
 OBSCURE_OPTS="\
     no-cms"
 
 EXTRA_DEFS="\
     -DOPENSSL_SMALL_FOOTPRINT \
-    -DNO_SYSLOG"
+    -DNO_SYSLOG \
+    -DOPENSSL_NO_DEPRECATED"
 
 BUILD_OPTS="\
     $COMPILER_FLAGS $GENERAL_OPTS $CIPHER_OPTS $OBSCURE_OPTS $EXTRA_DEFS"
