@@ -1089,12 +1089,13 @@ void EVP_MAC_names_do_all(const EVP_MAC *mac,
                           void *data);
 
 /* PKEY stuff */
-int EVP_PKEY_decrypt_old(unsigned char *dec_key,
-                         const unsigned char *enc_key, int enc_key_len,
-                         EVP_PKEY *private_key);
-int EVP_PKEY_encrypt_old(unsigned char *enc_key,
-                         const unsigned char *key, int key_len,
-                         EVP_PKEY *pub_key);
+DEPRECATEDIN_3_0(int EVP_PKEY_decrypt_old(unsigned char *dec_key,
+                                          const unsigned char *enc_key,
+                                          int enc_key_len,
+                                          EVP_PKEY *private_key))
+DEPRECATEDIN_3_0(int EVP_PKEY_encrypt_old(unsigned char *enc_key,
+                                          const unsigned char *key,
+                                          int key_len, EVP_PKEY *pub_key))
 int EVP_PKEY_type(int type);
 int EVP_PKEY_id(const EVP_PKEY *pkey);
 int EVP_PKEY_base_id(const EVP_PKEY *pkey);
@@ -1472,7 +1473,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
                                          const char *name,
                                          const char *propquery);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx,
-                                         EVP_PKEY *pkey);
+                                         EVP_PKEY *pkey, const char *propquery);
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 
@@ -1589,6 +1590,8 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx);
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
