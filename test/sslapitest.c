@@ -110,6 +110,17 @@ static unsigned char serverinfov2[] = {
     0xff        /* Dummy extension data */
 };
 
+static int hostname_cb(SSL *s, int *al, void *arg)
+{
+    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+
+    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
+                             || strcmp(hostname, "altgoodhost") == 0))
+        return  SSL_TLSEXT_ERR_OK;
+
+    return SSL_TLSEXT_ERR_NOACK;
+}
+
 static void client_keylog_callback(const SSL *ssl, const char *line)
 {
     int line_length = strlen(line);
@@ -3194,17 +3205,6 @@ static int test_early_data_not_sent(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
-}
-
-static int hostname_cb(SSL *s, int *al, void *arg)
-{
-    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-
-    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
-                             || strcmp(hostname, "altgoodhost") == 0))
-        return  SSL_TLSEXT_ERR_OK;
-
-    return SSL_TLSEXT_ERR_NOACK;
 }
 
 static const char *servalpn;
@@ -7127,6 +7127,11 @@ OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(certsdir = test_get_argument(0))
             || !TEST_ptr(srpvfile = test_get_argument(1))
             || !TEST_ptr(tmpfilename = test_get_argument(2)))
