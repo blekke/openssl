@@ -5,8 +5,6 @@ set -e
 
 begin=$(date)
 
-./openssl-update.sh
-
 # Analyze in docker
 docker run -v /home/tsm/openssl/openssl:/openssl -it --rm davxy/sonar-builder /bin/bash -c "cd openssl && ./util/sonar-run.sh"
 
