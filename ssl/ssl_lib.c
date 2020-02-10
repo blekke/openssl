@@ -5856,6 +5856,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
     if (ENGINE_get_cipher_engine(nid) != NULL)
         return EVP_get_cipherbynid(nid);
 #endif
+
     /* Otherwise we do an explicit fetch */
     return EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
 }
@@ -5900,6 +5901,7 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
     if (ENGINE_get_digest_engine(nid) != NULL)
         return EVP_get_digestbynid(nid);
 #endif
+
     /* Otherwise we do an explicit fetch */
     return EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
 }
